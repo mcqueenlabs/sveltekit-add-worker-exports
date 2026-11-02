@@ -87,7 +87,14 @@ export function createModuleRulesPlugin(userRules: ModuleRule[]): EsbuildPlugin 
 	// JS rules are dropped from the match loop — esbuild's default handling is
 	// exactly their meaning — but they still participate in fallthrough
 	// finalisation above, like in wrangler.
-	const kept = compileModuleRules(allRules).filter((rule) => !isJavaScriptRuleType(rule.type));
+	// Typed here rather than inferred: miniflare's own return type varies
+	// between versions, and the installing project's miniflare is the one
+	// used when this package builds as a git dependency.
+	const compiled = compileModuleRules(allRules) as Array<{
+		type: ModuleRuleType;
+		include: ReturnType<typeof globsToRegExps>;
+	}>;
+	const kept = compiled.filter((rule) => !isJavaScriptRuleType(rule.type));
 
 	// Recompute which rules `compileModuleRules` dropped, so files matching
 	// only a shadowed rule get wrangler's error instead of esbuild's opaque
